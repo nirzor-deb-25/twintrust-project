@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TwinTrust — Sensor Dashboard</title>
+<style>
+:root { color-scheme: dark; }
+body {
+  margin: 0; background: #101827; color: #edf2fa;
+  font-family: system-ui, sans-serif;
+}
+main { max-width: 1050px; margin: auto; padding: 36px 20px; }
+h1 { margin-bottom: 6px; }
+.subtitle, .label { color: #aab8cf; }
+.banner {
+  padding: 16px; margin: 26px 0;
+  background: #233149; border-radius: 12px;
+}
+.grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+}
+.card {
+  background: #1a2639; border: 1px solid #30415c;
+  border-radius: 14px; padding: 24px;
+}
+.value { font-size: 36px; font-weight: 650; margin: 14px 0; }
+.details {
+  margin-top: 24px; padding: 22px;
+  background: #1a2639; border-radius: 14px; line-height: 1.9;
+}
+.good { color: #6ee7a8; }
+.warn { color: #ffce73; }
+.bad { color: #ff9292; }
+a { color: #8cc7ff; }
+@media(max-width: 700px) {
+  .grid { grid-template-columns: 1fr; }
+}
+</style>
+<style>
+:root{color-scheme:dark;--bg:#0b1321;--panel:#142135;--line:#2c405b;--muted:#b2c2d8;--accent:#69e0d2}
+body{background:var(--bg);color:#eff5ff;font:16px/1.6 system-ui,sans-serif}main{max-width:1120px;padding:30px 24px 60px}h1{font-size:42px;letter-spacing:-1.5px;margin:0}h2{font-size:25px;line-height:1.25;margin-bottom:16px}h3{font-size:19px}p{margin:10px 0 16px}.subtitle,.label{color:var(--muted)}.site-header{display:flex;justify-content:space-between;gap:18px;align-items:center;padding:10px 0 22px}.eyebrow{font-size:11px;letter-spacing:2px;color:var(--accent);font-weight:700}.brand-dot{color:var(--accent)}.site-header p{margin:6px 0}.device-tag{font-size:12px;border:1px solid var(--line);padding:8px 14px;border-radius:30px;white-space:nowrap;color:var(--muted)}.page-nav{display:flex;flex-wrap:wrap;gap:8px;position:sticky;top:0;background:#0b1321f5;padding:12px 0;z-index:5;border-bottom:1px solid var(--line);margin-bottom:22px}button,input,select,textarea{font:inherit;border:1px solid #3d526f;border-radius:8px;background:#0d192a;color:#eff5ff;padding:9px 13px!important;box-sizing:border-box;min-height:42px}button{cursor:pointer;background:#233a55;font-weight:600}button:hover{background:#305171}button:disabled{cursor:default;opacity:.5}button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:3px}.page-nav button[aria-pressed=true]{background:var(--accent);color:#0a2226;border-color:var(--accent)}[hidden]{display:none!important}.details{background:var(--panel);border:1px solid var(--line);padding:26px;line-height:1.65;margin-top:20px!important}.card{padding:20px;background:#0e1b2d;border-color:var(--line)}.value{font-size:38px;letter-spacing:-1px;margin:8px 0}.quick-guide{border-left:3px solid var(--accent);padding:12px 18px;background:#132b35;border-radius:0 10px 10px 0}.quick-guide strong{color:var(--accent)}.quick-guide p{margin:4px 0;color:#d0e0ef}.learn-more{border-top:1px solid var(--line);margin-top:20px;padding-top:14px}.learn-more summary{cursor:pointer;color:#a9cfff;font-weight:600}.learn-more[open] summary{margin-bottom:14px}.banner{margin:16px 0}table{font-size:14px}td,th{padding:12px!important;border-bottom:1px solid var(--line)}canvas{display:block;max-width:100%}#processed-reason{color:var(--muted)}#processed-status{font-size:13px;letter-spacing:1px}footer{font-size:13px;color:var(--muted);padding-top:28px}a{color:#9acbff}@media(max-width:650px){main{padding:18px 14px 40px}.site-header{align-items:flex-start}.device-tag{display:none}h1{font-size:34px}.page-nav{gap:6px}.page-nav button{flex:1 1 42%;font-size:14px}.details{padding:18px}.grid{grid-template-columns:1fr}h2{font-size:23px}}@media(prefers-reduced-motion:no-preference){.page-panel{animation:appear .2s ease-out}@keyframes appear{from{opacity:.4;transform:translateY(5px)}to{opacity:1;transform:none}}}
+</style></head>
+<body>
+<main>
+<header class="site-header"><div><span class="eyebrow">A SENSOR DATA LAB</span><h1>TwinTrust<span class="brand-dot">.</span></h1><p class="subtitle">See the readings. Reduce noise. Make a better decision.</p></div><span class="device-tag">STM32 + BME280</span></header><nav class="page-nav" aria-label="Dashboard sections"><button type="button" data-page="live" aria-pressed="true">Live readings</button><button type="button" data-page="filter" aria-pressed="false">Noise and filtering demo</button><button type="button" data-page="results" aria-pressed="false">Experiment results</button></nav><div class="page-panel" id="page-live" data-panel="live"><aside class="quick-guide"><strong>Quick guide</strong><p>Raw = the sensor reading. Filtered = the reading after reducing short changes. READY means recent data is available. STALE means updates have stopped.</p></aside><section class="details" id="presenter-controls">
+<h3>Presenter controls</h3>
+<p>Presenter only: pause sensor forwarding to demonstrate stale data.</p>
+<div id="presenter-unlock"><input id="presenter-key" type="password" autocomplete="off" placeholder="Presenter key" aria-label="Presenter key"><button id="presenter-unlock-button" type="button">Unlock controls</button></div>
+<div id="presenter-actions" hidden><button id="presenter-toggle" type="button">Pause live updates</button> <button id="presenter-lock" type="button">Lock controls</button></div>
+<p id="presenter-message" role="status">Locked. Visitors can view the dashboard normally.</p>
+</section>
+<script>
+(()=>{
+let key='',paused=false;
+const get=id=>document.getElementById(id);
+async function request(method,body){
+ const response=await fetch('/presenter/forwarding',{method,cache:'no-store',headers:{'X-Presenter-Key':key,...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})});
+ if(!response.ok)throw new Error(response.status===403?'Incorrect presenter key.':'Could not contact presenter controls.');
+ return response.json();
+}
+function render(){get('presenter-toggle').textContent=paused?'Resume live updates':'Pause live updates';get('presenter-message').textContent=paused?'Forwarding paused. After 5 seconds without accepted data, the dashboard becomes STALE.':'Forwarding on. READY requires fresh data to pass the checks.';}
+get('presenter-unlock-button').onclick=async()=>{
+ key=get('presenter-key').value.trim();
+ try{const data=await request('GET');paused=data.paused;get('presenter-key').value='';get('presenter-unlock').hidden=true;get('presenter-actions').hidden=false;render();}
+ catch(e){key='';get('presenter-message').textContent=e.message;}
+};
+get('presenter-toggle').onclick=async()=>{
+ get('presenter-toggle').disabled=true;
+ try{const data=await request('POST',{paused:!paused});paused=data.paused;render();}
+ catch(e){get('presenter-message').textContent=e.message;}
+ finally{get('presenter-toggle').disabled=false;}
+};
+get('presenter-lock').onclick=()=>{key='';get('presenter-actions').hidden=true;get('presenter-unlock').hidden=false;get('presenter-message').textContent='Controls locked. Forwarding state is unchanged; resume updates before locking.';};
+})();
+</script>
+
+<section class="details" aria-labelledby="processed-heading" style="margin-top:24px">
+  <h2 id="processed-heading" style="margin-top:0">Live temperature</h2>
+  <p class="subtitle">Compare readings before and after filtering. Old values stay visible, but decisions stop when data is missing or too old.</p>
+  <div role="status" aria-live="polite">
+    <strong id="processed-status">CONNECTING</strong>
+    <p id="processed-reason">Loading processed view...</p>
+  </div>
+  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
+    <div class="card"><div class="label">Before filtering</div><div class="value" id="processed-raw">--</div><div class="label">°C · last accepted reading</div><p id="processed-raw-decision">Decision paused</p></div>
+    <div class="card"><div class="label">After filtering</div><div class="value" id="processed-filtered">--</div><div class="label">°C · last accepted reading</div><p id="processed-filtered-decision">Decision paused</p></div>
+  </div>
+  <h3>30-second prediction</h3>
+  <p id="processed-forecast-state" role="status">Prediction paused</p>
+  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
+    <div class="card"><div class="label">Prediction from raw data</div><div class="value" id="processed-raw-forecast">--</div><div class="label">°C · 30 seconds ahead</div></div>
+    <div class="card"><div class="label">Prediction from filtered data</div><div class="value" id="processed-filtered-forecast">--</div><div class="label">°C · 30 seconds ahead</div></div>
+  </div>
+  <p class="subtitle">Demo alert: 22°C or above. Predictions are estimates, not safety advice. A fresh reading can still be wrong.</p>
+<details class="learn-more"><summary>Advanced: session and data details</summary>
+  <p>Shared session: start after message ID <strong id="processed-boundary">Loading…</strong>.</p>
+  <p class="subtitle">The backend saves this setting for everyone. Refreshing keeps it. After a board restart, the presenter starts a new session on the laptop. No message ID is needed from visitors.</p>
+  <p id="processed-summary" class="subtitle"></p>
+  <p id="processed-issue" class="subtitle"></p>
+  <details><summary>Quality flags in the checked window</summary><ul id="processed-flags"></ul></details>
+  <p><a id="processed-json" href="/quality/latest" target="_blank" rel="noopener">Inspect processed JSON</a></p>
+  </details></section>
+<section class="details" id="raw-readings"><h2 style="margin-top:28px">All sensor readings</h2>
+
+<div class="banner" role="status" aria-live="polite">
+  <strong id="status">CONNECTING</strong>
+  <div id="reason">Checking the backend…</div>
+</div>
+
+<div class="grid">
+  <section class="card">
+    <div class="label">Temperature</div>
+    <div class="value" id="temperature">—</div>
+    <div class="label">°C · latest received reading</div>
+  </section>
+  <section class="card">
+    <div class="label">Humidity</div>
+    <div class="value" id="humidity">—</div>
+    <div class="label">% RH · latest received reading</div>
+  </section>
+  <section class="card">
+    <div class="label">Pressure</div>
+    <div class="value" id="pressure">—</div>
+    <div class="label">hPa · latest received reading</div>
+  </section>
+</div>
+
+<p class="subtitle">Old values stay visible when updates stop. Recent data does not guarantee an accurate sensor.</p>
+<p>
+  <a href="/health" target="_blank" rel="noopener">Health</a> ·
+  <a href="/history?limit=30" target="_blank" rel="noopener">History</a>
+</p>
+
+
+<!-- TwinTrust quality panel -->
+<details class="learn-more"><summary>Connection details</summary><div class="details">
+  <div>MQTT: <span id="mqtt">—</span></div>
+  <div>Stored messages: <span id="count">—</span></div>
+  <div>Sequence: <span id="sequence">—</span></div>
+  <div>Source validity flag: <span id="valid">—</span></div>
+  <div>Firmware error count: <span id="errors">—</span></div>
+  <div>Received: <span id="received">—</span></div>
+  <div>Time since backend reception: <span id="age">—</span></div>
+</div>
+
+</details></section><section style="margin-top:32px">
+  <h2>Recent readings</h2>
+  <p class="subtitle">The latest 300 messages. Gaps mean missing or invalid data. Each chart uses its own scale.</p>
+  <p id="history-status" role="status">Loading history?</p>
+  <div id="history-charts"></div>
+</section>
+
+
+<section class="details" style="margin-top:28px">
+  <h2 style="margin-top:0">Data checks</h2>
+  <p id="quality-status" role="status">Loading checks?</p>
+  <div id="quality-results"></div>
+  <p class="subtitle">Checks on the latest 300 messages. Warnings help you investigate; they do not prove a sensor fault.</p>
+  <details class="learn-more"><summary>How these checks work</summary><ul id="quality-notes" class="subtitle"></ul>
+</details></section>
+
+</div><div class="page-panel" id="page-filter" data-panel="filter" hidden="hidden"><aside class="quick-guide"><strong>Presenter-led demonstration</strong><p>Show spikes, a sustained rise and a gap. Compare the blue raw line with the yellow filtered line.</p></aside><section class="details" style="margin-top:28px">
+  <h2 style="margin-top:0">Noise and filtering demo</h2>
+  <p class="subtitle">Recorded data with simulated changes. These controls affect this replay only, not the physical sensor or live processing.</p>
+  <label for="experiment-choice">Scenario:</label>
+  <select id="experiment-choice" style="padding:8px;margin:8px">
+    <option value="spikes" selected>1. Spikes: reduce isolated jumps</option>
+    <option value="sustained_rise">2. Sustained rise: observe response delay</option>
+    <option value="dropout">3. Dropout: keep missing data visible</option>
+  </select>
+  <p>
+    <span style="color:#7dd3fc">Blue: raw</span> ·
+    <span style="color:#fbbf24">Yellow: filtered</span>
+  </p>
+
+<!-- TwinTrust adjustable offline filter -->
+<div style="padding:16px;border:1px solid #30415c;border-radius:10px;margin:16px 0">
+  <h3 style="margin-top:0">Adjust the filter</h3>
+  <label for="filter-window">Spike filter (median):</label>
+  <select id="filter-window" style="padding:8px;margin:8px">
+    <option value="1">1 reading (no median smoothing)</option><option value="3">3 readings</option>
+    <option value="5" selected>5 readings</option><option value="9">9 readings</option>
+  </select><br>
+  <label for="filter-alpha">Smoothing (EMA alpha):</label>
+  <select id="filter-alpha" style="padding:8px;margin:8px">
+    <option value="0.1">0.10 (more smoothing)</option><option value="0.25" selected>0.25</option>
+    <option value="0.5">0.50</option><option value="1">1.00 (no EMA smoothing)</option>
+  </select>
+  <button id="filter-defaults" type="button">Reset filter</button>
+  <p id="filter-settings-status" class="subtitle" role="status">Saved settings: median 5, EMA alpha 0.25.</p>
+  <p class="subtitle">A larger median window can reduce isolated spikes. Lower alpha adds smoothing. Both can delay a real change. Changing a setting pauses this replay.</p>
+</div>
+
+<!-- TwinTrust experiment replay controls -->
+<div style="margin:16px 0">
+  <button id="replay-play" type="button" style="padding:8px">Play</button>
+  <button id="replay-pause" type="button" style="padding:8px">Pause</button>
+  <button id="replay-restart" type="button" style="padding:8px">Restart</button>
+  <label for="replay-speed">Speed:</label>
+  <select id="replay-speed" style="padding:8px">
+    <option value="1">1×</option>
+    <option value="5" selected>5×</option>
+    <option value="10">10×</option>
+  </select>
+  <input id="replay-position" type="range" min="0" max="1" step="0.1" value="0" aria-label="Experiment replay position" style="display:block;width:100%;margin-top:16px">
+  <p id="replay-state" role="status">Loading replay?</p>
+  <p class="subtitle">Replay follows sensor time. Scores below describe the whole recording, including parts not played yet.</p>
+</div>
+
+  <canvas id="experiment-canvas" style="width:100%;height:280px" role="img"></canvas>
+
+<!-- TwinTrust replay decisions -->
+<div style="margin:20px 0;padding:16px;border:1px solid #30415c;border-radius:10px">
+  <h3 style="margin-top:0">What would the dashboard decide?</h3>
+  <p class="subtitle">Demo rule: show a warning at 22°C or above. This is not a safety limit.</p>
+  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
+    <section>
+      <strong>Raw input</strong>
+      <p id="decision-raw" role="status">Waiting?</p>
+      <p id="decision-raw-reason" class="subtitle"></p>
+    </section>
+    <section>
+      <strong>Filtered input</strong>
+      <p id="decision-filtered" role="status">Waiting?</p>
+      <p id="decision-filtered-reason" class="subtitle"></p>
+    </section>
+  </div>
+  <p class="subtitle">A high reading may be a real change or a sensor fault. Check other evidence before acting.</p>
+</div>
+
+  <p id="experiment-metrics"></p>
+  <p id="experiment-delay"></p>
+  <p class="subtitle">Chart: temperature (°C) over time (seconds). Missing readings stay missing. Error compares output with the saved reference, not a calibrated measurement.</p>
+<details class="learn-more"><summary>More details</summary><p id="experiment-status" role="status">Loading saved evaluation?</p>
+  <p id="decision-context" class="subtitle"></p>
+  </details></section>
+
+
+</div><div class="page-panel" id="page-results" data-panel="results" hidden="hidden">
+<aside class="quick-guide"><strong>What did our experiments show?</strong><p>Compare spikes with a sustained rise. These are saved 30-second prediction tests, separate from live readings.</p></aside>
+<section class="details" aria-labelledby="experiment-results-heading">
+<h2 id="experiment-results-heading" style="margin-top:0">Experiment results</h2>
+<p>MAE is the average prediction error in °C. Lower is better. Green marks the lowest error in each row.</p>
+<div style="overflow-x:auto"><table id="forecast-summary-table" style="width:100%;border-collapse:collapse;text-align:left" aria-label="Spikes and sustained rise prediction comparison"></table></div>
+<p id="forecast-summary-state" role="status">Loading saved results…</p>
+<p id="forecast-key-takeaway" class="subtitle"></p>
+<p class="subtitle">Raw trend uses readings before filtering. Filtered trend uses smoothed readings. Hold value assumes the latest raw value stays unchanged.</p>
+<details class="learn-more"><summary>More details: all scenarios and limitations</summary>
+<div style="overflow-x:auto"><table id="forecast-table" style="width:100%;border-collapse:collapse;text-align:left"></table></div>
+<p class="subtitle">Scored = predictions compared with the reference. Coverage = the share of eligible starting points with scored predictions. Missing predictions matter too.</p>
+<label for="forecast-choice">Inspect a saved scenario:</label>
+<select id="forecast-choice"></select>
+<p id="forecast-explanation"></p><p id="forecast-coverage"></p>
+<p id="forecast-status" role="status">Loading saved report…</p>
+<ul id="forecast-limitations" class="subtitle"></ul>
+<p class="subtitle">The reference is recorded data with designed changes, not a calibrated measurement of physical truth. Each scenario uses matching scored times for all three methods.</p>
+</details>
+<details class="learn-more"><summary>More details: saved data checks</summary>
+<p class="subtitle">Additional saved tests. Counts are clues, not confirmed sensor faults.</p>
+<div style="overflow-x:auto"><table id="detection-table" style="width:100%;border-collapse:collapse;text-align:left"></table></div>
+<label for="detection-choice">Inspect a data check:</label><select id="detection-choice"></select>
+<p id="detection-explanation"></p><p id="detection-status" role="status">Loading saved checks…</p><ul id="detection-examples"></ul>
+</details>
+</section>
+<aside class="quick-guide" style="margin-top:20px"><strong>Next: the runway simulation</strong><p>The class will apply these ideas in a separate team activity. Use the runway link provided by the presenter.</p></aside>
+</div><footer>Presenter-led TwinTrust demonstration · Live readings and saved experiments are separate. Audience participation takes place in the runway simulation.</footer>
+
+</main>
+
+<script>
+const el = id => document.getElementById(id);
+let latest = null;
+let health = null;
+let apiError = true;
+
+function numberText(value) {
+  return typeof value === "number" && Number.isFinite(value)
+    ? value.toFixed(2) : "—";
+}
+
+function setStatus(title, reason, style) {
+  el("status").textContent = title;
+  el("status").className = style;
+  el("reason").textContent = reason;
+}
+
+function render() {
+  if (health) {
+    el("mqtt").textContent = health.mqtt_connected && health.mqtt_subscribed
+      ? "Connected and subscribed" : "Disconnected or reconnecting";
+    el("count").textContent = health.stored_messages;
+  }
+
+  const record = latest?.record;
+  const received = latest ? Date.parse(latest.received_utc) : NaN;
+  const age = (Date.now() - received) / 1000;
+
+  el("temperature").textContent = numberText(record?.temperature_c);
+  el("humidity").textContent = numberText(record?.humidity_percent);
+  el("pressure").textContent = numberText(record?.pressure_hpa);
+  el("sequence").textContent = record?.seq ?? "—";
+  el("valid").textContent =
+    record?.valid === true ? "true" :
+    record?.valid === false ? "false" : "unknown";
+  el("errors").textContent = record?.error_count ?? "—";
+  el("received").textContent = Number.isFinite(received)
+    ? new Date(received).toLocaleString() : "—";
+  el("age").textContent = Number.isFinite(age)
+    ? `${age.toFixed(1)} seconds` : "—";
+
+  if (apiError) {
+    setStatus("API UNAVAILABLE", "Cannot refresh the backend. Displayed values may be old.", "bad");
+  } else if (health.last_storage_error) {
+    setStatus("STORAGE ERROR", "The backend reports a database write error.", "bad");
+  } else if (!health.mqtt_connected || !health.mqtt_subscribed) {
+    setStatus("MQTT DISCONNECTED", "The backend is not currently subscribed to telemetry.", "bad");
+  } else if (!latest) {
+    setStatus("WAITING", "No messages stored yet. Start the serial gateway.", "warn");
+  } else if (!Number.isFinite(age) || age < -1) {
+    setStatus("TIME CHECK NEEDED", "The reception timestamp cannot be compared with the browser clock.", "warn");
+  } else if (age > 5) {
+    setStatus("STALE", "No new message received for more than 5 seconds. Check whether the gateway is running.", "warn");
+  } else if (latest.parse_error || record?.valid !== true) {
+    setStatus("INVALID READING", "The latest message could not be parsed or its source validity flag is not true.", "bad");
+  } else {
+    setStatus("RECEIVING", "Recent telemetry received; the firmware marks this reading valid.", "good");
+  }
+}
+
+async function getJson(path, allowEmpty = false) {
+  const response = await fetch(path, {
+    cache: "no-store",
+    signal: AbortSignal.timeout(4000)
+  });
+  if (allowEmpty && response.status === 404) return null;
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return response.json();
+}
+
+async function poll() {
+  try {
+    const [newHealth, newLatest] = await Promise.all([
+      getJson("/health"),
+      getJson("/latest", true)
+    ]);
+    health = newHealth;
+    latest = newLatest;
+    apiError = false;
+  } catch (error) {
+    apiError = true;
+    console.error(error);
+  }
+  render();
+  setTimeout(poll, 1000);
+}
+
+setInterval(render, 500);
+poll();
+</script>
+
+<script>
+(() => {
+  const definitions = [
+    ["temperature_c", "Temperature", "°C", "#7dd3fc"],
+    ["humidity_percent", "Humidity", "% RH", "#6ee7b7"],
+    ["pressure_hpa", "Pressure", "hPa", "#c4b5fd"]
+  ];
+
+  const container = document.getElementById("history-charts");
+  const status = document.getElementById("history-status");
+  let messages = [];
+
+  const charts = definitions.map(([field, title, unit, color]) => {
+    const section = document.createElement("section");
+    section.className = "card";
+    section.style.marginBottom = "16px";
+
+    const heading = document.createElement("h3");
+    heading.textContent = `${title} (${unit})`;
+    heading.style.marginTop = "0";
+
+    const canvas = document.createElement("canvas");
+    canvas.style.width = "100%";
+    canvas.style.height = "220px";
+    canvas.setAttribute("role", "img");
+
+    const summary = document.createElement("p");
+    summary.className = "subtitle";
+    summary.style.marginBottom = "0";
+
+    section.append(heading, canvas, summary);
+    container.append(section);
+    return {field, title, unit, color, canvas, summary};
+  });
+
+  function draw(chart) {
+    const {canvas, field, title, unit, color, summary} = chart;
+    const width = Math.max(1, canvas.getBoundingClientRect().width);
+    const height = 220;
+    const ratio = window.devicePixelRatio || 1;
+
+    canvas.width = Math.round(width * ratio);
+    canvas.height = Math.round(height * ratio);
+
+    const ctx = canvas.getContext("2d");
+    ctx.scale(ratio, ratio);
+    ctx.font = "12px system-ui";
+    ctx.lineWidth = 1;
+
+    const points = messages.map(message => {
+      const record = message.record;
+      const raw = record?.[field];
+      return {
+        time: Date.parse(message.received_utc),
+        value: !message.parse_error && record?.valid === true
+          && typeof raw === "number" && Number.isFinite(raw)
+            ? raw : null
+      };
+    });
+
+    const timed = points.filter(point => Number.isFinite(point.time));
+    const usable = timed.filter(point => point.value !== null);
+
+    if (!usable.length) {
+      ctx.fillStyle = "#aab8cf";
+      ctx.fillText("No valid readings available.", 12, 40);
+      summary.textContent = "No valid readings in this window.";
+      canvas.setAttribute("aria-label", `${title}: no valid readings`);
+      return;
+    }
+
+    const values = usable.map(point => point.value);
+    const minimum = Math.min(...values);
+    const maximum = Math.max(...values);
+    const padding = Math.max((maximum - minimum) * 0.15, 0.02);
+    const low = minimum - padding;
+    const high = maximum + padding;
+
+    const first = Math.min(...timed.map(point => point.time));
+    const last = Math.max(...timed.map(point => point.time));
+    const duration = Math.max(last - first, 1000);
+
+    const left = 76, right = 16, top = 14, bottom = 38;
+    const plotWidth = Math.max(1, width - left - right);
+    const plotHeight = height - top - bottom;
+    const x = time => left + (time - first) / duration * plotWidth;
+    const y = value => top + (high - value) / (high - low) * plotHeight;
+
+    ctx.textAlign = "right";
+
+    for (let step = 0; step <= 4; step++) {
+      const value = low + (high - low) * step / 4;
+      const position = y(value);
+
+      ctx.strokeStyle = "#30415c";
+      ctx.beginPath();
+      ctx.moveTo(left, position);
+      ctx.lineTo(width - right, position);
+      ctx.stroke();
+
+      ctx.fillStyle = "#aab8cf";
+      ctx.fillText(value.toFixed(2), left - 8, position + 4);
+    }
+
+    const timeLabel = time => new Date(time).toLocaleTimeString(
+      [], {hour: "2-digit", minute: "2-digit", second: "2-digit"}
+    );
+
+    ctx.textAlign = "left";
+    ctx.fillText(timeLabel(first), left, height - 12);
+    ctx.textAlign = "right";
+    ctx.fillText(timeLabel(last), width - right, height - 12);
+
+    let previous = null;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+
+    for (const point of points) {
+      if (!Number.isFinite(point.time) || point.value === null) {
+        previous = null;
+        continue;
+      }
+
+      const delta = previous ? point.time - previous.time : 0;
+
+      if (previous && delta >= 0 && delta <= 5000) {
+        ctx.beginPath();
+        ctx.moveTo(x(previous.time), y(previous.value));
+        ctx.lineTo(x(point.time), y(point.value));
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(x(point.time), y(point.value), 2, 0, Math.PI * 2);
+      ctx.fill();
+      previous = point;
+    }
+
+    summary.textContent =
+      `${usable.length}/${messages.length} usable readings ? ` +
+      `range ${minimum.toFixed(2)}?${maximum.toFixed(2)} ${unit}`;
+
+    canvas.setAttribute("aria-label", `${title}. ${summary.textContent}`);
+  }
+
+  function drawAll() {
+    charts.forEach(draw);
+  }
+
+  async function refreshHistory() {
+    try {
+      const response = await fetch("/history?limit=300", {
+        cache: "no-store",
+        signal: AbortSignal.timeout(4000)
+      });
+
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      const data = await response.json();
+      messages = data.messages;
+      drawAll();
+
+      status.className = "subtitle";
+      status.textContent =
+        `${messages.length} stored messages displayed. ` +
+        "History refreshes every 3 seconds; current freshness is shown above.";
+    } catch (error) {
+      status.className = "warn";
+      status.textContent =
+        "Cannot refresh history. Previously loaded charts may be old.";
+      console.error(error);
+    }
+
+    setTimeout(refreshHistory, 3000);
+  }
+
+  window.addEventListener("resize", drawAll);
+  refreshHistory();
+})();
+</script>
+
+
+<script>
+(() => {
+  const status = document.getElementById("quality-status");
+  const results = document.getElementById("quality-results");
+  const notes = document.getElementById("quality-notes");
+
+  function analyze(messages) {
+    const counts = {
+      checked: messages.length,
+      parsing: 0,
+      schema: 0,
+      sourceInvalid: 0,
+      range: 0,
+      repeated: 0,
+      conflicting: 0,
+      forward: 0,
+      backward: 0,
+      restart: 0,
+      receptionGaps: 0,
+      clockBackward: 0
+    };
+
+    const seen = new Map();
+    const previousByDevice = new Map();
+    let previousReception = null;
+
+    const integer = value =>
+      Number.isSafeInteger(value) && value >= 0;
+
+    const numeric = value =>
+      typeof value === "number" && Number.isFinite(value);
+
+    for (const message of messages) {
+      const reception = Date.parse(message.received_utc);
+
+      if (Number.isFinite(reception)) {
+        if (previousReception !== null) {
+          const delta = reception - previousReception;
+          if (delta > 5000) counts.receptionGaps++;
+          if (delta < 0) counts.clockBackward++;
+        }
+        previousReception = reception;
+      }
+
+      const record = message.record;
+
+      if (message.parse_error || !record || typeof record !== "object") {
+        counts.parsing++;
+        previousByDevice.clear();
+        continue;
+      }
+
+      const schemaValid =
+        record.device === "discovery01" &&
+        integer(record.seq) &&
+        integer(record.uptime_ms) &&
+        integer(record.error_count) &&
+        typeof record.valid === "boolean";
+
+      if (!schemaValid) counts.schema++;
+      if (record.valid !== true) counts.sourceInvalid++;
+
+      if (record.valid === true) {
+        const rangeValid =
+          numeric(record.temperature_c) &&
+          record.temperature_c >= -40 &&
+          record.temperature_c <= 85 &&
+          numeric(record.humidity_percent) &&
+          record.humidity_percent >= 0 &&
+          record.humidity_percent <= 100 &&
+          numeric(record.pressure_hpa) &&
+          record.pressure_hpa >= 300 &&
+          record.pressure_hpa <= 1100;
+
+        if (!rangeValid) counts.range++;
+      }
+
+      if (!schemaValid) {
+        previousByDevice.clear();
+        continue;
+      }
+
+      // Both counters identify a candidate repeated reading.
+      // No boot identifier is available, so this is not proof.
+      const key = JSON.stringify([
+        record.device, record.seq, record.uptime_ms
+      ]);
+      const signature = JSON.stringify([
+        record.valid, record.temperature_c, record.humidity_percent,
+        record.pressure_hpa, record.error_count
+      ]);
+
+      if (seen.has(key)) {
+        counts.repeated++;
+        if (seen.get(key) !== signature) counts.conflicting++;
+        continue;
+      }
+
+      seen.set(key, signature);
+
+      const previous = previousByDevice.get(record.device);
+
+      if (previous) {
+        const sequenceDown = record.seq < previous.seq;
+        const uptimeDown = record.uptime_ms < previous.uptime_ms;
+
+        if (sequenceDown && uptimeDown) {
+          counts.restart++;
+        } else if (record.seq <= previous.seq || uptimeDown) {
+          counts.backward++;
+        } else if (record.seq > previous.seq + 1) {
+          counts.forward++;
+        }
+      }
+
+      previousByDevice.set(record.device, record);
+    }
+
+    return counts;
+  }
+
+  function render(counts) {
+    results.replaceChildren();
+    notes.replaceChildren();
+
+    const rows = [
+      ["Stored messages checked", counts.checked],
+      ["JSON parsing errors", counts.parsing],
+      ["Messages with missing or incorrect metadata", counts.schema],
+      ["Records not marked valid by the source", counts.sourceInvalid],
+      ["Source-valid records failing numeric/range checks", counts.range],
+      ["Possible repeated readings (same device, sequence and uptime)", counts.repeated],
+      ["Repeated identifiers with conflicting readings", counts.conflicting],
+      ["Forward sequence-gap events", counts.forward],
+      ["Other backward or non-increasing counter events", counts.backward],
+      ["Possible restart events (sequence and uptime both decrease)", counts.restart],
+      ["Reception gaps longer than 5 seconds", counts.receptionGaps],
+      ["Backward reception timestamps", counts.clockBackward]
+    ];
+
+    const table = document.createElement("table");
+    table.style.width = "100%";
+    table.style.borderCollapse = "collapse";
+
+    for (const [label, count] of rows) {
+      const row = document.createElement("tr");
+      const name = document.createElement("th");
+      const value = document.createElement("td");
+
+      name.scope = "row";
+      name.textContent = label;
+      name.style.textAlign = "left";
+      name.style.fontWeight = "400";
+      name.style.padding = "6px 10px 6px 0";
+
+      value.textContent = count;
+      value.style.textAlign = "right";
+      value.style.fontWeight = "650";
+      value.style.verticalAlign = "top";
+
+      row.append(name, value);
+      table.append(row);
+    }
+    results.append(table);
+
+    const explanations = [
+      "Sequence gaps and reception gaps can occur when the gateway is intentionally stopped; they do not prove network loss.",
+      "A possible restart can also reflect delayed older data. A boot identifier would be needed to distinguish these reliably.",
+      "Repeated identifiers are flagged for inspection; original messages remain stored.",
+      "Range checks use broad sensor limits, not room-comfort thresholds. Plausible readings can still contain bias or noise."
+    ];
+
+    for (const explanation of explanations) {
+      const item = document.createElement("li");
+      item.textContent = explanation;
+      notes.append(item);
+    }
+
+    status.className = "subtitle";
+    status.textContent = counts.checked
+      ? "Checks refreshed. Counts describe this history window, including older captures."
+      : "No stored messages available yet.";
+  }
+
+  async function refresh() {
+    try {
+      const response = await fetch("/history?limit=300", {
+        cache: "no-store",
+        signal: AbortSignal.timeout(4000)
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      render(analyze(data.messages));
+    } catch (error) {
+      status.className = "warn";
+      status.textContent =
+        "Cannot refresh quality checks. Previously displayed counts may be old.";
+      console.error(error);
+    }
+    setTimeout(refresh, 3000);
+  }
+
+  refresh();
+})();
+</script>
+
+
+<script>
+(() => {
+  const choice = document.getElementById("experiment-choice");
+  const canvas = document.getElementById("experiment-canvas");
+  const status = document.getElementById("experiment-status");
+
+  let savedDatasets = null;
+  let experiment = null;
+  let replaySeconds = 0;
+  let playing = false;
+  let previousTick = performance.now();
+
+
+  function filterRows(rows, windowSize, alpha) {
+    let window = [], ema = null, previous = null;
+    return rows.map(row => {
+      const reset = !previous || row.filter_reset || row.device !== previous.device ||
+        row.seq <= previous.seq || row.seq > previous.seq + 1 ||
+        row.uptime_ms <= previous.uptime_ms || row.uptime_ms - previous.uptime_ms > 5000;
+      if (reset) { window = []; ema = null; }
+      const value = row.raw_temperature_c;
+      const usable = typeof value === "number" && Number.isFinite(value) && value >= -40 && value <= 85;
+      if (usable) {
+        window.push(value); if (window.length > windowSize) window.shift();
+        const sorted = window.slice().sort((a,b) => a-b), middle = Math.floor(sorted.length / 2);
+        const median = sorted.length % 2 ? sorted[middle] : (sorted[middle-1] + sorted[middle]) / 2;
+        ema = ema === null ? median : alpha * median + (1-alpha) * ema;
+      } else { window = []; ema = null; }
+      previous = row;
+      return {...row, filtered_temperature_c: ema, filter_reset: Boolean(reset || !usable)};
+    });
+  }
+
+  function applyFilterSettings() {
+    if (!savedDatasets || !experiment) return;
+    const size = Number(document.getElementById("filter-window").value);
+    const alpha = Number(document.getElementById("filter-alpha").value);
+    playing = false;
+    experiment.datasets = Object.fromEntries(Object.entries(savedDatasets).map(([name, rows]) =>
+      [name, size === 5 && alpha === 0.25 ? rows : filterRows(rows, size, alpha)]));
+    document.getElementById("filter-settings-status").textContent =
+      `Active replay settings: median ${size}, EMA alpha ${alpha.toFixed(2)}. ` +
+      (size === 5 && alpha === 0.25 ? "Showing saved filter outputs." : "Showing recalculated outputs; saved reports are unchanged.");
+    updateReplayControls(); draw();
+  }
+
+  function updateReplayDecisions(rows) {
+    const threshold = 22;
+    const latest = rows.length ? rows[rows.length - 1] : null;
+    const finite = value =>
+      typeof value === "number" && Number.isFinite(value);
+
+    const currentUptime = experiment.datasets[choice.value][0].uptime_ms
+      + replaySeconds * 1000;
+    const age = latest ? (currentUptime - latest.uptime_ms) / 1000 : null;
+    const stale = age !== null && age > 5;
+
+    function show(prefix, field) {
+      const label = document.getElementById(prefix);
+      const reason = document.getElementById(prefix + "-reason");
+      const value = latest?.[field];
+
+      if (!latest || !finite(value)) {
+        label.textContent = "UNAVAILABLE";
+        label.className = "warn";
+        reason.textContent = "No usable reading at this replay position.";
+      } else if (stale) {
+        label.textContent = "STALE ? CHECK DATA";
+        label.className = "warn";
+        reason.textContent =
+          `Latest revealed value: ${value.toFixed(2)} °C; ` +
+          `${age.toFixed(1)} source seconds old. Threshold decision withheld.`;
+      } else {
+        const warning = value >= threshold;
+        label.textContent = warning ? "TEMPERATURE WARNING" : "BELOW THRESHOLD";
+        label.className = warning ? "bad" : "good";
+        reason.textContent =
+          `${value.toFixed(2)} °C is ${warning ? "at or above" : "below"} ` +
+          `${threshold.toFixed(2)} °C.`;
+      }
+    }
+
+    show("decision-raw", "raw_temperature_c");
+    show("decision-filtered", "filtered_temperature_c");
+
+    document.getElementById("decision-context").textContent = latest
+      ? `Latest revealed sequence: ${latest.seq}. ` +
+        "Both decisions use the same rule and the same replay position."
+      : "No reading revealed yet.";
+  }
+
+
+  function replayDuration() {
+    if (!experiment) return 0;
+    const rows = experiment.datasets[choice.value];
+    return rows.length
+      ? Math.max(0, (rows[rows.length - 1].uptime_ms - rows[0].uptime_ms) / 1000)
+      : 0;
+  }
+
+  function updateReplayControls() {
+    const duration = replayDuration();
+    const slider = document.getElementById("replay-position");
+    slider.max = Math.max(duration, 0.1);
+    slider.value = replaySeconds;
+
+    document.getElementById("replay-state").textContent =
+      `${playing ? "Playing" : "Paused"} ? ` +
+      `${replaySeconds.toFixed(1)} / ${duration.toFixed(1)} source seconds`;
+
+    document.getElementById("replay-play").disabled = !experiment || playing;
+    document.getElementById("replay-pause").disabled = !playing;
+  }
+
+  function restartReplay() {
+    playing = false;
+    replaySeconds = 0;
+    previousTick = performance.now();
+    updateReplayControls();
+    draw();
+  }
+
+
+  function draw() {
+    if (!experiment) return;
+    const completeRows = experiment.datasets[choice.value];
+    const rows = completeRows.filter(
+      row => row.uptime_ms <= completeRows[0].uptime_ms + replaySeconds * 1000
+    );
+    updateReplayDecisions(rows);
+    const width = Math.max(canvas.getBoundingClientRect().width, 1);
+    const height = 280;
+    const ratio = window.devicePixelRatio || 1;
+    canvas.width = Math.round(width * ratio);
+    canvas.height = Math.round(height * ratio);
+    const ctx = canvas.getContext("2d");
+    ctx.scale(ratio, ratio);
+    ctx.font = "12px system-ui";
+
+    const fields = [
+      ["raw_temperature_c", "#7dd3fc"],
+      ["filtered_temperature_c", "#fbbf24"]
+    ];
+    const finite = value =>
+      typeof value === "number" && Number.isFinite(value);
+    const values = rows.flatMap(row => fields.map(([field]) => row[field]))
+      .filter(finite);
+    const timed = rows.filter(row => finite(row.uptime_ms));
+
+    if (!values.length || !timed.length) {
+      ctx.fillStyle = "#aab8cf";
+      ctx.fillText("No usable data.", 20, 40);
+      return;
+    }
+
+    const first = Math.min(...timed.map(row => row.uptime_ms));
+    const last = Math.max(...timed.map(row => row.uptime_ms));
+    const minimum = Math.min(...values);
+    const maximum = Math.max(...values);
+    const padding = Math.max((maximum - minimum) * 0.1, 0.02);
+    const low = minimum - padding, high = maximum + padding;
+    const left = 65, right = 16, top = 15, bottom = 40;
+    const x = time => left + (time - first) / Math.max(last-first, 1000)
+      * Math.max(width-left-right, 1);
+    const y = value => top + (high-value)/(high-low)
+      * (height-top-bottom);
+
+    for (let step = 0; step <= 4; step++) {
+      const value = low + (high-low)*step/4;
+      ctx.strokeStyle = "#30415c";
+      ctx.beginPath();
+      ctx.moveTo(left, y(value));
+      ctx.lineTo(width-right, y(value));
+      ctx.stroke();
+      ctx.fillStyle = "#aab8cf";
+      ctx.textAlign = "right";
+      ctx.fillText(value.toFixed(2), left-8, y(value)+4);
+    }
+
+    for (let step = 0; step <= 4; step++) {
+      const time = first + (last-first)*step/4;
+      ctx.textAlign = step === 0 ? "left" : step === 4 ? "right" : "center";
+      ctx.fillText(
+        ((time-first)/1000).toFixed(0) + " s", x(time), height-12
+      );
+    }
+
+    for (const [field, color] of fields) {
+      let previous = null;
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = 2;
+
+      for (const row of rows) {
+        if (!finite(row[field]) || !finite(row.uptime_ms)) {
+          previous = null;
+          continue;
+        }
+
+        if (previous && !row.filter_reset &&
+            row.uptime_ms >= previous.uptime_ms &&
+            row.uptime_ms-previous.uptime_ms <= 5000) {
+          ctx.beginPath();
+          ctx.moveTo(x(previous.uptime_ms), y(previous[field]));
+          ctx.lineTo(x(row.uptime_ms), y(row[field]));
+          ctx.stroke();
+        }
+        ctx.beginPath();
+        ctx.arc(x(row.uptime_ms), y(row[field]), 1.5, 0, Math.PI*2);
+        ctx.fill();
+        previous = row;
+      }
+    }
+
+    const metrics = experiment.report.results.find(
+      result => result.dataset === choice.value
+    );
+    const format = value => finite(value) ? value.toFixed(4) : "unavailable";
+    document.getElementById("experiment-metrics").textContent =
+      `Full-run scores ? Rows: ${metrics.rows} ? Raw MAE: ${format(metrics.raw_mae_c)} °C ? ` +
+      `Filtered MAE: ${format(metrics.filtered_mae_c)} °C ? ` +
+      `Missing sequence numbers: ${metrics.missing_sequence_numbers}`;
+
+    const test = experiment.report.rise_threshold_test;
+    document.getElementById("experiment-delay").textContent =
+      choice.value === "sustained_rise"
+        ? (finite(test.additional_crossing_delay_seconds)
+          ? `Filtered crossing of ${test.threshold_c} °C occurred ` +
+            `${test.additional_crossing_delay_seconds.toFixed(3)} seconds later in the full saved run. ` +
+            "This is a demonstration threshold, not a safety limit."
+          : "Threshold-crossing comparison unavailable.")
+        : "";
+
+    const custom = Number(document.getElementById("filter-window").value) !== 5 ||
+      Number(document.getElementById("filter-alpha").value) !== 0.25;
+    if (custom) {
+      document.getElementById("experiment-metrics").textContent =
+        "Custom filter preview. Saved MAE scores apply to median 5 / EMA 0.25 and are hidden here. No parameter validation on an independent session has been performed.";
+      const allRows = experiment.datasets[choice.value];
+      const rawCross = allRows.find(r => finite(r.raw_temperature_c) && r.raw_temperature_c >= 22);
+      const filteredCross = allRows.find(r => finite(r.filtered_temperature_c) && r.filtered_temperature_c >= 22);
+      document.getElementById("experiment-delay").textContent = choice.value === "sustained_rise"
+        ? (rawCross && filteredCross
+          ? `Full-run custom filter: first 22 C crossing is ${((filteredCross.uptime_ms-rawCross.uptime_ms)/1000).toFixed(3)} seconds later than raw. This summary includes readings beyond the replay position.`
+          : "Full-run custom filter: both threshold crossings are not available.") : "";
+    }
+
+    canvas.setAttribute("aria-label",
+      `${choice.options[choice.selectedIndex].text}: raw and filtered temperature.`);
+  }
+
+  async function load() {
+    try {
+      const response = await fetch("/experiments/latest", {
+        cache: "no-store", signal: AbortSignal.timeout(10000)
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      experiment = await response.json();
+      savedDatasets = experiment.datasets;
+      restartReplay();
+      status.className = "subtitle";
+      status.textContent = `Saved evaluation: ${experiment.evaluation_id}`;
+      draw();
+    } catch (error) {
+      status.className = "warn";
+      status.textContent =
+        `Cannot load evaluation (${error.message}). Check that the backend was restarted.`;
+    }
+  }
+
+
+  choice.addEventListener("change", restartReplay);
+  document.getElementById("filter-window").addEventListener("change", applyFilterSettings);
+  document.getElementById("filter-alpha").addEventListener("change", applyFilterSettings);
+  document.getElementById("filter-defaults").addEventListener("click", () => {
+    document.getElementById("filter-window").value = "5";
+    document.getElementById("filter-alpha").value = "0.25";
+    applyFilterSettings();
+  });
+
+  document.getElementById("replay-play").addEventListener("click", () => {
+    if (!experiment) return;
+    if (replaySeconds >= replayDuration()) replaySeconds = 0;
+    playing = true;
+    previousTick = performance.now();
+    updateReplayControls();
+    draw();
+  });
+
+  document.getElementById("replay-pause").addEventListener("click", () => {
+    playing = false;
+    updateReplayControls();
+  });
+
+  document.getElementById("replay-restart").addEventListener("click", restartReplay);
+
+  document.getElementById("replay-position").addEventListener("input", event => {
+    playing = false;
+    replaySeconds = Number(event.target.value);
+    updateReplayControls();
+    draw();
+  });
+
+  document.getElementById("replay-speed").addEventListener("change", () => {
+    previousTick = performance.now();
+  });
+
+  setInterval(() => {
+    const now = performance.now();
+    const elapsed = Math.min((now - previousTick) / 1000, 0.5);
+    previousTick = now;
+
+    if (!playing || !experiment) return;
+
+    const speed = Number(document.getElementById("replay-speed").value);
+    replaySeconds = Math.min(replaySeconds + elapsed * speed, replayDuration());
+
+    if (replaySeconds >= replayDuration()) playing = false;
+
+    updateReplayControls();
+    draw();
+  }, 100);
+
+  window.addEventListener("resize", draw);
+  load();
+})();
+</script>
+
+
+<script>
+(() => {
+  const status = document.getElementById("detection-status");
+  const table = document.getElementById("detection-table");
+  const choice = document.getElementById("detection-choice");
+  const examples = document.getElementById("detection-examples");
+  let saved = null;
+
+  const descriptions = {
+    control:
+      "Unmodified timing control. Compare other scenarios with this baseline; " +
+      "zero flags in this control does not establish a general false-alarm rate.",
+    delay:
+      "A long reception interval was flagged. This can also occur when capture " +
+      "is stopped; the rule does not measure absolute transport delay.",
+    duplicates:
+      "Repeated device, sequence and uptime identifiers were flagged. " +
+      "Original deliveries remain preserved.",
+    out_of_order:
+      "Some sequences arrived below the highest sequence already received. " +
+      "Without a boot identifier, a device restart can be ambiguous.",
+    stuck:
+      "Twenty identical consecutive temperatures trigger a flat-window warning. " +
+      "Overlapping windows are counted separately. Stable or rounded readings " +
+      "can also trigger this rule.",
+    bias_drift:
+      "These checks have no dedicated drift detector. A gradual in-range bias " +
+      "may pass all rules and may resemble a genuine temperature rise.",
+    unit_mismatch:
+      "Pressure values outside 300?1100 hPa were flagged. Incorrect units are " +
+      "one possible cause; the rule does not prove the cause or correct values."
+  };
+
+  function inspect() {
+    if (!saved) return;
+    const name = choice.value;
+    document.getElementById("detection-explanation").textContent =
+      descriptions[name] || "No explanation available.";
+
+    examples.replaceChildren();
+    const findings = saved.finding_examples[name] || [];
+
+    if (!findings.length) {
+      const item = document.createElement("li");
+      item.textContent = "No indicators recorded by these checks.";
+      examples.append(item);
+      return;
+    }
+
+    for (const finding of findings) {
+      const item = document.createElement("li");
+      item.textContent = `Sequence ${finding.seq}: ${finding.reason}`;
+      examples.append(item);
+    }
+
+    const item = document.createElement("li");
+    item.textContent = "Showing up to five saved findings.";
+    examples.append(item);
+  }
+
+  async function load() {
+    try {
+      const response = await fetch("/experiments/detection/latest", {
+        cache: "no-store",
+        signal: AbortSignal.timeout(10000)
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      saved = await response.json();
+
+      table.replaceChildren();
+      choice.replaceChildren();
+
+      const columns = [
+        ["dataset", "Scenario"],
+        ["rows", "Rows"],
+        ["duplicates", "Duplicates"],
+        ["late_order", "Late"],
+        ["arrival_gaps", "Gaps"],
+        ["pressure_range", "Pressure"],
+        ["flat_windows", "Flat windows"]
+      ];
+
+      const head = document.createElement("thead");
+      const header = document.createElement("tr");
+
+      for (const [, label] of columns) {
+        const cell = document.createElement("th");
+        cell.scope = "col";
+        cell.textContent = label;
+        cell.style.padding = "8px";
+        header.append(cell);
+      }
+      head.append(header);
+      table.append(head);
+
+      const body = document.createElement("tbody");
+
+      for (const result of saved.report.results) {
+        const row = document.createElement("tr");
+
+        for (const [field] of columns) {
+          const cell = document.createElement(field === "dataset" ? "th" : "td");
+          if (field === "dataset") cell.scope = "row";
+          cell.textContent = result[field];
+          cell.style.padding = "8px";
+          cell.style.borderTop = "1px solid #30415c";
+          row.append(cell);
+        }
+
+        body.append(row);
+
+        const option = document.createElement("option");
+        option.value = result.dataset;
+        option.textContent = result.dataset.replaceAll("_", " ");
+        choice.append(option);
+      }
+
+      table.append(body);
+      status.className = "subtitle";
+      status.textContent = `Saved report: ${saved.detection_id}`;
+      inspect();
+    } catch (error) {
+      status.className = "warn";
+      status.textContent =
+        `Cannot load detection report (${error.message}). ` +
+        "Check that the backend was restarted.";
+    }
+  }
+
+  choice.addEventListener("change", inspect);
+  load();
+})();
+</script>
+
+
+<script>
+(() => {
+  const status = document.getElementById("forecast-status");
+  const table = document.getElementById("forecast-table");
+  const choice = document.getElementById("forecast-choice");
+  let report = null;
+
+  const methods = [
+    ["raw_trend", "Raw trend"],
+    ["filtered_trend", "Filtered trend"],
+    ["hold_raw", "Hold current value"]
+  ];
+
+  const explanations = {
+    baseline:
+      "Unmodified recorded data. Smoothing can add lag even when there is " +
+      "no injected fault. The reference is recorded data, not calibrated truth.",
+    noise:
+      "Trend fitting can extrapolate noise. Compare both trend methods with " +
+      "the simple hold-current-value forecast.",
+    spikes:
+      "A spike can distort the fitted slope and its 30-second extrapolation. " +
+      "Median filtering can reduce the influence of isolated spikes.",
+    dropout:
+      "Missing readings are not reconstructed. The filter and predictor reset " +
+      "after the gap, reducing forecast coverage. Lower error alone does not " +
+      "account for unavailable predictions.",
+    sustained_rise:
+      "The reference includes the intended synthetic rise. Smoothing adds lag, " +
+      "and straight-line extrapolation can overshoot when the rise stops."
+  };
+
+  const numeric = value =>
+    typeof value === "number" && Number.isFinite(value);
+
+  function inspect() {
+    if (!report) return;
+    const result = report.results.find(
+      item => item.dataset === choice.value
+    );
+    if (!result) return;
+
+    const available = methods.filter(
+      ([key]) => numeric(result.mae_c[key])
+    );
+    const minimum = available.length
+      ? Math.min(...available.map(([key]) => result.mae_c[key]))
+      : null;
+    const winners = available.filter(
+      ([key]) => result.mae_c[key] === minimum
+    ).map(([, label]) => label);
+
+    document.getElementById("forecast-explanation").textContent =
+      (explanations[result.dataset] || "") +
+      (winners.length
+        ? ` Lowest MAE in this run: ${winners.join(" and ")}.`
+        : " No scored forecasts available.");
+
+    const coverage = numeric(result.coverage_fraction)
+      ? `${(result.coverage_fraction * 100).toFixed(1)}%`
+      : "unavailable";
+
+    document.getElementById("forecast-coverage").textContent =
+      `Scored: ${result.scored_forecasts} of ` +
+      `${result.eligible_origins} eligible origins (${coverage}). ` +
+      `Unavailable: ${result.unavailable_forecasts}. ` +
+      "Eligible origins have a target time within the reference recording; " +
+      "startup history requirements can still prevent a forecast.";
+  }
+
+  async function load() {
+    try {
+      const response = await fetch("/experiments/forecast/latest", {
+        cache: "no-store",
+        signal: AbortSignal.timeout(10000)
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      const saved = await response.json();
+      report = saved.report;
+      table.replaceChildren();
+      const summary = document.getElementById("forecast-summary-table");
+      summary.replaceChildren();
+      choice.replaceChildren();
+
+      const head = document.createElement("thead");
+      const header = document.createElement("tr");
+
+      for (const label of [
+        "Scenario", "Scored", "Coverage",
+        "Raw trend MAE", "Filtered trend MAE", "Hold value MAE"
+      ]) {
+        const cell = document.createElement("th");
+        cell.scope = "col";
+        cell.textContent = label;
+        cell.style.padding = "8px";
+        header.append(cell);
+      }
+
+      head.append(header);
+      table.append(head);
+      summary.append(head.cloneNode(true));
+      const summaryBody = document.createElement("tbody");
+      const body = document.createElement("tbody");
+
+      for (const result of report.results) {
+        const row = document.createElement("tr");
+        const scores = methods.map(([key]) => result.mae_c[key])
+          .filter(numeric);
+        const minimum = scores.length ? Math.min(...scores) : null;
+
+        const values = [
+          result.dataset.replaceAll("_", " "),
+          result.scored_forecasts,
+          numeric(result.coverage_fraction)
+            ? `${(result.coverage_fraction * 100).toFixed(1)}%`
+            : "?",
+          ...methods.map(([key]) =>
+            numeric(result.mae_c[key])
+              ? result.mae_c[key].toFixed(4)
+              : "?"
+          )
+        ];
+
+        values.forEach((value, index) => {
+          const cell = document.createElement(index === 0 ? "th" : "td");
+          if (index === 0) cell.scope = "row";
+          cell.textContent = value;
+          cell.style.padding = "8px";
+          cell.style.borderTop = "1px solid #30415c";
+
+          if (index >= 3) {
+            const score = result.mae_c[methods[index - 3][0]];
+            if (numeric(score) && score === minimum) {
+              cell.style.color = "#6ee7a8";
+              cell.style.fontWeight = "700";
+              cell.textContent += " (lowest)";
+            }
+          }
+          row.append(cell);
+        });
+
+        body.append(row);
+        if (["spikes", "sustained_rise"].includes(result.dataset)) {
+          summaryBody.append(row.cloneNode(true));
+        }
+        const option = document.createElement("option");
+        option.value = result.dataset;
+        option.textContent = result.dataset.replaceAll("_", " ");
+        choice.append(option);
+      }
+
+      table.append(body);
+      summary.append(summaryBody);
+      document.getElementById("forecast-summary-state").textContent =
+        summaryBody.children.length === 2 ? "Saved experiment results. These scores do not change when you adjust the replay filter."
+        : "This saved report does not contain both demonstration scenarios. Open More details to see available results.";
+      const spike = report.results.find(r => r.dataset === "spikes");
+      const rise = report.results.find(r => r.dataset === "sustained_rise");
+      const insights = [];
+      if (spike && numeric(spike.mae_c.raw_trend) && numeric(spike.mae_c.filtered_trend)) {
+        insights.push(spike.mae_c.filtered_trend < spike.mae_c.raw_trend
+          ? "Spikes: the filtered trend had less error than the raw trend in this run."
+          : "Spikes: filtering did not reduce trend prediction error in this run.");
+      }
+      if (rise && numeric(rise.mae_c.raw_trend) && numeric(rise.mae_c.filtered_trend)) {
+        insights.push(rise.mae_c.filtered_trend > rise.mae_c.raw_trend
+          ? "Sustained rise: the filtered trend had more error than the raw trend in this run."
+          : "Sustained rise: the filtered trend did not have more error than the raw trend in this run.");
+      }
+      document.getElementById("forecast-key-takeaway").textContent = insights.join(" ");
+
+      const limitations = document.getElementById("forecast-limitations");
+      limitations.replaceChildren();
+
+      for (const text of report.limitations) {
+        const item = document.createElement("li");
+        item.textContent = text;
+        limitations.append(item);
+      }
+
+      status.className = "subtitle";
+      status.textContent =
+        `Saved report: ${saved.forecast_id} ? ` +
+        `Forecast horizon: ${report.horizon_seconds} seconds`;
+      inspect();
+    } catch (error) {
+      document.getElementById("forecast-summary-state").textContent = "Saved results are unavailable. Open More details for the error.";
+      status.className = "warn";
+      status.textContent =
+        `Cannot load forecast report (${error.message}). ` +
+        "Check that the backend was restarted.";
+    }
+  }
+
+  choice.addEventListener("change", inspect);
+  load();
+})();
+</script>
+
+<script>
+(() => {
+  const get = id => document.getElementById(id);
+  const finite = value => typeof value === "number" && Number.isFinite(value);
+  const format = value => finite(value) ? value.toFixed(2) : "--";
+  let data = null, error = true, receivedAt = 0, roundTripSeconds = 0;
+  let boundary = null;
+  const statusReasons = {
+    ready: "Recent data received. Readings and decisions are available.",
+    stale: "No accepted update for over 5 seconds. Decisions and predictions are paused.",
+    unavailable: "No usable reading yet. Check the sensor or restart settings.",
+    time_check_needed: "The timing needs checking. Decisions and predictions are paused.",
+    mqtt_disconnected: "The message connection is down. Decisions and predictions are paused.",
+    storage_error: "Data could not be saved. Decisions and predictions are paused."
+  };
+  function render() {
+    const last = data?.latest_accepted;
+    get("processed-boundary").textContent = boundary === null ? "Loading…" : String(boundary);
+    get("processed-raw").textContent = format(last?.raw_temperature_c);
+    get("processed-filtered").textContent = format(last?.filtered_temperature_c);
+    const elapsed = Math.max(0, (performance.now() - receivedAt) / 1000);
+    // Add round-trip time conservatively; never keep a ready result alive merely
+    // because no new response has arrived. Backend computes the authoritative age.
+    const age = finite(data?.age_seconds) ? data.age_seconds + roundTripSeconds + elapsed : null;
+    const state = error ? "api_unavailable" : data?.status === "ready" && (age === null || age < 0)
+      ? "time_check_needed" : data?.status === "ready" && age > 5 ? "stale" : data?.status || "unavailable";
+    const ready = state === "ready";
+    get("processed-status").textContent = state.replaceAll("_", " ").toUpperCase();
+    get("processed-status").className = ready ? "good" : "warn";
+    get("processed-reason").textContent = error
+      ? "Cannot load new data. Shown values may be old. Decisions are paused."
+      : statusReasons[state] || "Processed state is not recognized. Decisions and forecasts are withheld.";
+    for (const kind of ["raw", "filtered"]) {
+      const decision = ready ? data[kind + "_decision"] : "withheld";
+      const node = get("processed-" + kind + "-decision");
+      node.textContent = decision === "warning" ? "TEMPERATURE WARNING" : decision === "below_threshold" ? "BELOW THRESHOLD" : "Decision paused";
+      node.className = decision === "warning" ? "bad" : decision === "below_threshold" ? "good" : "warn";
+      const forecast = ready && data.forecast_status === "ready"
+        ? data.forecast_30s_c?.[kind + "_temperature_c"] : null;
+      get("processed-" + kind + "-forecast").textContent = format(forecast);
+    }
+    const forecastsReady = ready && data.forecast_status === "ready" &&
+      [data.forecast_30s_c?.raw_temperature_c, data.forecast_30s_c?.filtered_temperature_c].every(finite);
+    get("processed-forecast-state").textContent = forecastsReady ? "A 30-second estimate, not a safety warning."
+      : ready && data.forecast_status === "warming_up" ? "Collecting readings. The prediction needs at least 20 readings over 19 seconds."
+      : "Prediction paused";
+    get("processed-summary").textContent = data
+      ? `Boundary: after ID ${boundary}. Checked ${data.checked_messages}; accepted ${data.accepted_messages}. Stored IDs ${data.first_checked_id ?? "none"} to ${data.last_checked_id ?? "none"}. Last accepted sequence: ${last?.seq ?? "none"}. Conservative reception age estimate: ${age === null ? "unavailable" : age.toFixed(1) + " seconds"}.`
+      : "Waiting for the shared session setting.";
+    get("processed-issue").textContent = data?.latest_issue
+      ? "Latest processing issue: " + data.latest_issue + ". Rejected duplicate or backward messages do not refresh accepted reception time."
+      : "";
+  }
+  async function poll() {
+    const started = performance.now();
+    try {
+      const response = await fetch("/quality/latest", {
+        cache: "no-store", signal: AbortSignal.timeout(4000)
+      });
+      if (!response.ok) throw new Error("HTTP " + response.status);
+      const result = await response.json();
+      if (result.processing_version !== "quality-v1" || !Number.isSafeInteger(result.after_id) || result.after_id < 0 ||
+          !Object.hasOwn(statusReasons, result.status) || !Number.isSafeInteger(result.checked_messages) ||
+          !Number.isSafeInteger(result.accepted_messages)) throw new Error("Invalid processed response");
+      boundary = result.after_id;
+      data = result; error = false; receivedAt = performance.now();
+      roundTripSeconds = Math.max(0, (receivedAt - started) / 1000);
+      const list = get("processed-flags"); list.replaceChildren();
+      const entries = Object.entries(result.quality_counts || {});
+      for (const [flag, count] of entries) {
+        const item = document.createElement("li"); item.textContent = flag + ": " + count; list.append(item);
+      }
+      if (!entries.length) { const item = document.createElement("li"); item.textContent = "No flags in this checked window."; list.append(item); }
+    } catch (_) {
+      error = true;
+    }
+    render(); setTimeout(poll, 1000);
+  }
+  setInterval(render, 250);
+  document.addEventListener("visibilitychange", render);
+  render(); poll();
+})();
+
+</script>
+<script>(() => {
+ const buttons=[...document.querySelectorAll('[data-page]')];
+ function show(key){
+  if(key==='challenge'||key==='audience-challenge')key='filter';
+  if(!buttons.some(b=>b.dataset.page===key))key='live';
+  for(const p of document.querySelectorAll('[data-panel]'))p.hidden=p.dataset.panel!==key;
+  for(const b of buttons)b.setAttribute('aria-pressed',String(b.dataset.page===key));
+  requestAnimationFrame(()=>window.dispatchEvent(new Event('resize')));
+ }
+ for(const b of buttons)b.addEventListener('click',()=>{history.replaceState(null,'','#'+b.dataset.page);show(b.dataset.page)});
+ window.addEventListener('hashchange',()=>show(location.hash.slice(1)));
+ show(location.hash.slice(1));
+})();</script></body>
+</html>

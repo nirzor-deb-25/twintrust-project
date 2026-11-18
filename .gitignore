@@ -1,0 +1,87 @@
+﻿
+# Python environment
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Private settings and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Local data, presenter key and databases
+data/
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.sqlite3-*
+
+# Backups and logs
+backups/
+*.log
+
+# Generated build files
+Debug/
+Release/
+build/
+*.o
+*.elf
+*.bin
+*.hex
+
+# Editor and operating system files
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
+
+# Unrelated coursework
+/Petri/
+
+# STM32 workspace cache
+.metadata/
+
+# Old backups
+*.bak
+*~
+main_detection_backup_*.txt
+main_working_measurements_*.txt
+
+# Previous website packages and exports
+/TwinTrust_Simple_Website/
+/TwinTrust_public_*/
+/*.zip
+
+# Local presentation documents and screenshots
+/*.png
+/*.pdf
+/*.docx
+/*.pptx
+
+# Unrelated coursework
+/Petri/
+
+# STM32 workspace cache
+.metadata/
+
+# Old backups
+*.bak
+*~
+main_detection_backup_*.txt
+main_working_measurements_*.txt
+
+# Previous website packages and exports
+/TwinTrust_Simple_Website/
+/TwinTrust_public_*/
+/*.zip
+
+# Local presentation documents and screenshots
+/*.png
+/*.pdf
+/*.docx
+/*.pptx
